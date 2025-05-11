@@ -1,0 +1,113 @@
+document.addEventListener('DOMContentLoaded', function() {
+    const botonesAgregar = document.querySelectorAll('.agregar-carrito');
+    const cartCountSpan = document.getElementById('cart-count');
+    const cartItemsList = document.getElementById('cart-items');
+    const cartTotalPriceSpan = document.getElementById('cart-total-price');
+    const viewCartBtn = document.getElementById('view-cart-btn');
+    const cartSection = document.getElementById('cart-section');
+    const checkoutBtn = document.getElementById('checkout-btn');
+    const clearCartBtn = document.getElementById('clear-cart-btn');
+
+    let cart = [];
+
+    function actualizarCarritoVisual() {
+        cartCountSpan.textContent = cart.length;
+        cartItemsList.innerHTML = '';
+        let total = 0;
+
+        cart.forEach(item => {
+            const listItem = document.createElement('li');
+            listItem.innerHTML = `
+                <div class="cart-item-info">
+                    <span class="cart-item-name">${item.nombre}</span>
+                    <span class="cart-item-price">$${item.precio.toFixed(2)}</span>
+                </div>
+                <div class="cart-item-quantity">
+                    <button class="quantity-btn minus-btn" data-id="${item.id}">-</button>
+                    <span>${item.cantidad}</span>
+                    <button class="quantity-btn plus-btn" data-id="${item.id}">+</button>
+                </div>
+                <button class="remove-item-btn" data-id="${item.id}">Eliminar</button>
+            `;
+            cartItemsList.appendChild(listItem);
+            total += item.precio * item.cantidad;
+        });
+
+        cartTotalPriceSpan.textContent = total.toFixed(2);
+
+        // Mostrar u ocultar la sección del carrito si hay items
+        cartSection.style.display = cart.length > 0 ? 'block' : 'none';
+    }
+
+    function agregarAlCarrito(id, nombre, precio) {
+        const existingItem = cart.find(item => item.id === id);
+
+        if (existingItem) {
+            existingItem.cantidad++;
+        } else {
+            cart.push({ id: id, nombre: nombre, precio: precio, cantidad: 1 });
+        }
+        actualizarCarritoVisual();
+    }
+
+    function removerDelCarrito(id) {
+        cart = cart.filter(item => item.id !== id);
+        actualizarCarritoVisual();
+    }
+
+    function cambiarCantidad(id, incremento) {
+        const item = cart.find(item => item.id === id);
+        if (item) {
+            item.cantidad += incremento;
+            if (item.cantidad < 1) {
+                removerDelCarrito(id);
+            } else {
+                actualizarCarritoVisual();
+            }
+        }
+    }
+
+    botonesAgregar.forEach(boton => {
+        boton.addEventListener('click', function() {
+            const id = parseInt(this.dataset.id);
+            const nombre = this.dataset.nombre;
+            const precio = parseFloat(this.dataset.precio);
+            agregarAlCarrito(id, nombre, precio);
+        });
+    });
+
+    cartItemsList.addEventListener('click', function(event) {
+        if (event.target.classList.contains('remove-item-btn')) {
+            const id = parseInt(event.target.dataset.id);
+            removerDelCarrito(id);
+        } else if (event.target.classList.contains('plus-btn')) {
+            const id = parseInt(event.target.dataset.id);
+            cambiarCantidad(id, 1);
+        } else if (event.target.classList.contains('minus-btn')) {
+            const id = parseInt(event.target.dataset.id);
+            cambiarCantidad(id, -1);
+        }
+    });
+
+    viewCartBtn.addEventListener('click', function() {
+        cartSection.style.display = cartSection.style.display === 'none' ? 'block' : 'none';
+    });
+
+    clearCartBtn.addEventListener('click', function() {
+        cart = [];
+        actualizarCarritoVisual();
+    });
+
+    checkoutBtn.addEventListener('click', function() {
+        if (cart.length > 0) {
+            alert('¡Gracias por tu compra!');
+            cart = [];
+            actualizarCarritoVisual();
+        } else {
+            alert('Tu carrito está vacío.');
+        }
+    });
+
+    // Inicializar el carrito visual (si hubiera algo en el almacenamiento local, por ejemplo)
+    actualizarCarritoVisual();
+});
